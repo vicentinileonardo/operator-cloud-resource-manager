@@ -1,0 +1,9 @@
+apiVersion: greenops.greenops.test/v1
+kind: VirtualMachine
+metadata:
+  labels:
+    app.kubernetes.io/name: operator-cloud-resource-manager
+    app.kubernetes.io/managed-by: kustomize
+  name: virtualmachine-sample
+spec:
+  # TODO(user): Add fields here
