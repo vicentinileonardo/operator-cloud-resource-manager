@@ -47,9 +47,35 @@ type VirtualMachineReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.0/pkg/reconcile
 func (r *VirtualMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	l := log.FromContext(ctx)
 
 	// TODO(user): your logic here
+
+	l.Info("Reconciling VirtualMachine")
+
+	// Fetch the VirtualMachine instance
+	vm := &greenopsv1.VirtualMachine{}
+	err := r.Get(ctx, req.NamespacedName, vm)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			l.Info("VirtualMachine resource not found")
+			return ctrl.Result{}, nil
+		}
+		l.Error(err, "Failed to get VirtualMachine")
+		return ctrl.Result{}, err
+	}
+
+	//set status field provisioned to true
+	vm.Status.Provisioned = true
+	err = r.Status().Update(ctx, vm)
+	if err != nil {
+		l.Error(err, "Failed to update VirtualMachine status")
+		return ctrl.Result{}, err
+	} else {
+		l.Info("VirtualMachine status updated")
+	}
+
+	l.Info("End Reconciling VirtualMachine")
 
 	return ctrl.Result{}, nil
 }

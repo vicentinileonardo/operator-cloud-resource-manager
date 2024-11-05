@@ -29,13 +29,17 @@ type VirtualMachineSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of VirtualMachine. Edit virtualmachine_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Image  string `json:"image,omitempty"`
+	Cpu    int32  `json:"cpu,omitempty"`
+	Memory string `json:"memory,omitempty"`
 }
 
 // VirtualMachineStatus defines the observed state of VirtualMachine.
 type VirtualMachineStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	Provisioned bool `json:"provisioned,omitempty"`
 }
 
 // +kubebuilder:object:root=true

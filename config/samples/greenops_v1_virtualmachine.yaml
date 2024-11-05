@@ -6,4 +6,6 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: virtualmachine-sample
 spec:
-  # TODO(user): Add fields here
+  image: "ubuntu"
+  memory: "4Gi"
+  cpu: 2
