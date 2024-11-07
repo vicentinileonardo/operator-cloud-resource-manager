@@ -29,9 +29,11 @@ type VirtualMachineSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of VirtualMachine. Edit virtualmachine_types.go to remove/update
-	Image  string `json:"image,omitempty"`
-	Cpu    int32  `json:"cpu,omitempty"`
-	Memory string `json:"memory,omitempty"`
+	Image            string `json:"image,omitempty"`
+	Cpu              int32  `json:"cpu,omitempty"`
+	Memory           string `json:"memory,omitempty"`
+	Provider         string `json:"provider,omitempty"`
+	SchedulingRegion string `json:"schedulingRegion,omitempty"`
 }
 
 // VirtualMachineStatus defines the observed state of VirtualMachine.

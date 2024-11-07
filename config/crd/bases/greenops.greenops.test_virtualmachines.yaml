@@ -48,6 +48,10 @@ spec:
                 type: string
               memory:
                 type: string
+              provider:
+                type: string
+              schedulingRegion:
+                type: string
             type: object
           status:
             description: VirtualMachineStatus defines the observed state of VirtualMachine.

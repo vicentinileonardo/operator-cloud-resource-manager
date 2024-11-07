@@ -9,3 +9,4 @@ spec:
   image: "ubuntu"
   memory: "4Gi"
   cpu: 2
+  schedulingRegion: "not_scheduled"
