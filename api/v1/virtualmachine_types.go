@@ -28,12 +28,17 @@ type VirtualMachineSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of VirtualMachine. Edit virtualmachine_types.go to remove/update
-	Image            string `json:"image,omitempty"`
-	Cpu              int32  `json:"cpu,omitempty"`
-	Memory           string `json:"memory,omitempty"`
-	Provider         string `json:"provider,omitempty"`
-	SchedulingRegion string `json:"schedulingRegion,omitempty"`
+	Image           string                             `json:"image,omitempty"`
+	Cpu             int32                              `json:"cpu,omitempty"`
+	Memory          string                             `json:"memory,omitempty"`
+	Provider        string                             `json:"provider,omitempty"`
+	EligibleRegions []string                           `json:"eligibleRegions,omitempty"`
+	Scheduling      []VirtualMachineSchedulingResponse `json:"scheduling,omitempty"`
+}
+
+type VirtualMachineSchedulingResponse struct {
+	Type     string `json:"type,omitempty"`
+	Decision string `json:"decision,omitempty"` //could be renamed
 }
 
 // VirtualMachineStatus defines the observed state of VirtualMachine.

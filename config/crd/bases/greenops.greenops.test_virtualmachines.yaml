@@ -42,16 +42,25 @@ spec:
               cpu:
                 format: int32
                 type: integer
+              eligibleRegions:
+                items:
+                  type: string
+                type: array
               image:
-                description: Foo is an example field of VirtualMachine. Edit virtualmachine_types.go
-                  to remove/update
                 type: string
               memory:
                 type: string
               provider:
                 type: string
-              schedulingRegion:
-                type: string
+              scheduling:
+                items:
+                  properties:
+                    decision:
+                      type: string
+                    type:
+                      type: string
+                  type: object
+                type: array
             type: object
           status:
             description: VirtualMachineStatus defines the observed state of VirtualMachine.
