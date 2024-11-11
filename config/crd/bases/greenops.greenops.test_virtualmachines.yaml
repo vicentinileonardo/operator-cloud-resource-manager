@@ -53,6 +53,12 @@ spec:
               provider:
                 type: string
               scheduling:
+                default:
+                - decision: region_not_scheduled
+                  type: region
+                - decision: time_not_scheduled
+                  type: time
+                description: Array of objects default
                 items:
                   properties:
                     decision:

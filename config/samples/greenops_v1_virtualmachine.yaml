@@ -9,8 +9,3 @@ spec:
   image: "ubuntu"
   memory: "4Gi"
   cpu: 2
-  scheduling:
-    - type: "region"
-      decision: "region_not_scheduled"
-    - type: "time"
-      decision: "time_not_scheduled"
