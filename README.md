@@ -29,3 +29,9 @@ kubectl get virtualmachines
 
 kubectl describe virtualmachine virtualmachine-sample
 ```
+
+
+```bash
+go get github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301
+go mod tidy
+```

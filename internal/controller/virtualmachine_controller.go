@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	azurergv1 "github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601"
 	greenopsv1 "github.com/vicentinileonardo/cloud-resource-manager/api/v1"
 )
 
@@ -32,6 +34,11 @@ import (
 type VirtualMachineReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+}
+
+type Scheduling struct {
+	SchedulingRegion string
+	SchedulingTime   string
 }
 
 // +kubebuilder:rbac:groups=greenops.greenops.test,resources=virtualmachines,verbs=get;list;watch;create;update;patch;delete
@@ -49,8 +56,6 @@ type VirtualMachineReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.0/pkg/reconcile
 func (r *VirtualMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
-
-	// TODO(user): your logic here
 
 	l.Info("Reconciling VirtualMachine")
 
@@ -70,31 +75,84 @@ func (r *VirtualMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if vm.Spec.Provider == "" {
 		l.Info("Provider information not yet available, requeuing")
 		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil //interval to be defined
+	} else {
+		l.Info("Provider information available")
 	}
 
 	// Log image, cpu, memory, provider, region, time
-	if vm.Spec.Image != "" {
-		l.Info("Image: " + vm.Spec.Image)
-	}
-	if vm.Spec.Cpu != 0 {
-		l.Info("Cpu: " + string(vm.Spec.Cpu)) //TODO: fix this
-	}
-	if vm.Spec.Memory != "" {
-		l.Info("Memory: " + vm.Spec.Memory)
-	}
-	if vm.Spec.Provider != "" {
-		l.Info("Provider: " + vm.Spec.Provider)
-	}
+	l.Info("Image: " + vm.Spec.Image)
+	l.Info("Cpu: " + string(vm.Spec.Cpu)) //TODO: fix this
+	l.Info("Memory: " + vm.Spec.Memory)
+	l.Info("Provider: " + vm.Spec.Provider)
+
+	schedulingInfo := Scheduling{}
 	for _, scheduling := range vm.Spec.Scheduling {
-		l.Info("Type: " + scheduling.Type)
-		l.Info("Decision: " + scheduling.Decision)
+		//l.Info(fmt.Sprintf("Type: %s", scheduling.Type))
+		//l.Info(fmt.Sprintf("Decision: %s", scheduling.Decision))
+
+		switch scheduling.Type {
+		case "region":
+			schedulingInfo.SchedulingRegion = scheduling.Decision
+		case "time":
+			schedulingInfo.SchedulingTime = scheduling.Decision
+		default:
+			l.Info("Unknown scheduling type")
+		}
 	}
 
-	// check if provider specific resource already exists, if not create a new one
+	l.Info(fmt.Sprintf("SchedulingRegion: %s", schedulingInfo.SchedulingRegion))
+	l.Info(fmt.Sprintf("SchedulingTime: %s", schedulingInfo.SchedulingTime))
 
+	// Azure ResourceGroup
+
+	// Check if ResourceGroup already exists
+	rg := &azurergv1.ResourceGroup{}
+	err = r.Get(ctx, client.ObjectKey{
+		Namespace: vm.Namespace,
+		Name:      vm.Name + "-rg",
+	}, rg)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			l.Info("Azure ResourceGroup not found")
+			l.Info("Creating ResourceGroup")
+			rg := &azurergv1.ResourceGroup{
+				ObjectMeta: ctrl.ObjectMeta{
+					Name:      vm.Name + "-rg",
+					Namespace: vm.Namespace,
+				},
+				Spec: azurergv1.ResourceGroup_Spec{
+					Location: &schedulingInfo.SchedulingRegion,
+				},
+			}
+
+			if err := ctrl.SetControllerReference(vm, rg, r.Scheme); err != nil {
+				l.Error(err, "Failed to set controller reference for Azure ResourceGroup")
+				return ctrl.Result{}, err
+			} else {
+				l.Info("Set controller reference for Azure ResourceGroup")
+			}
+
+			if err := r.Create(ctx, rg); err != nil {
+				l.Error(err, "Failed to create Azure ResourceGroup")
+				return ctrl.Result{}, err
+			}
+
+			l.Info("Created Azure ResourceGroup")
+
+		} else {
+			l.Error(err, "Failed to get Azure ResourceGroup")
+			return ctrl.Result{}, err
+		}
+	} else {
+		l.Info("Azure ResourceGroup found in the cluster")
+	}
+
+	// check if provider specific vm already exists, if not create a new one
 	// create the cloud-specific VirtualMachine resource
-
+	// Create or update using CreateOrUpdate
+	//op, err := controllerutil.CreateOrUpdate(ctx, r.Client, cloudCR, func() error {
 	//at the end set status field provisioned to true
+
 	vm.Status.Provisioned = true
 	err = r.Status().Update(ctx, vm)
 	if err != nil {
@@ -109,8 +167,73 @@ func (r *VirtualMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return ctrl.Result{}, nil
 }
 
+/*
+func (r *VirtualMachineReconciler) createAndPersistAzureResourceGroup(ctx context.Context, vm *greenopsv1.VirtualMachine, schedulingInfo Scheduling) (*azurergv1.ResourceGroup, error) {
+    // ResourceGroup already exists, return the existing one
+    //return existingRg, nil
+}
+*/
+
+/*
+func (r *VirtualMachineReconciler) createAzureVirtualMachine(vm *greenopsv1.VirtualMachine, rg *azurergv1.ResourceGroup, schedulingInfo Scheduling) *azurevmv1.VirtualMachine {
+	// Set the ResourceGroup as owner using KnownResourceReference
+	owner := genruntime.KnownResourceReference{
+		Name: rg.Name,
+	}
+
+	// Fixed values for now
+	vmSize := "Standard_A1_v2"
+	publisher := "Canonical"
+	offer := "0001-com-ubuntu-server-jammy"
+	sku := "22-04-lts"
+	version := "latest"
+	location := schedulingInfo.SchedulingRegion
+
+	// Create the Azure VM
+	azureVM := &azurevmv1.VirtualMachine{
+		ObjectMeta: ctrl.ObjectMeta{
+			Name:      vm.Name,
+			Namespace: vm.Namespace,
+			Labels: map[string]string{
+				"app":           vm.Name,
+				"resourcegroup": rg.Name,
+			},
+		},
+		Spec: azurevmv1.VirtualMachine_Spec{
+			Location: &location,
+			Owner:    &owner,
+			HardwareProfile: &azurevmv1.HardwareProfile{
+				VmSize: &vmSize,
+			},
+			StorageProfile: &azurevmv1.StorageProfile{
+				ImageReference: &azurevmv1.ImageReference{
+					Publisher: &publisher,
+					Offer:     &offer,
+					Sku:       &sku,
+					Version:   &version,
+				},
+			},
+		},
+	}
+
+	// Set the VirtualMachine as the owner of the Azure VM
+	if err := ctrl.SetControllerReference(vm, azureVM, r.Scheme); err != nil {
+		// In production code, you should handle this error appropriately
+		return nil
+	}
+
+	return azureVM
+}
+*/
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *VirtualMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
+	// Register the Azure Resource Group to the scheme
+	if err := azurergv1.AddToScheme(mgr.GetScheme()); err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&greenopsv1.VirtualMachine{}).
 		Named("virtualmachine").
