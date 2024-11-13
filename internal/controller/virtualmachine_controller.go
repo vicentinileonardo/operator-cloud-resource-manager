@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -65,7 +66,35 @@ func (r *VirtualMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
-	//set status field provisioned to true
+	// Check if scheduling information is available
+	if vm.Spec.Provider == "" {
+		l.Info("Provider information not yet available, requeuing")
+		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil //interval to be defined
+	}
+
+	// Log image, cpu, memory, provider, region, time
+	if vm.Spec.Image != "" {
+		l.Info("Image: " + vm.Spec.Image)
+	}
+	if vm.Spec.Cpu != 0 {
+		l.Info("Cpu: " + string(vm.Spec.Cpu)) //TODO: fix this
+	}
+	if vm.Spec.Memory != "" {
+		l.Info("Memory: " + vm.Spec.Memory)
+	}
+	if vm.Spec.Provider != "" {
+		l.Info("Provider: " + vm.Spec.Provider)
+	}
+	for _, scheduling := range vm.Spec.Scheduling {
+		l.Info("Type: " + scheduling.Type)
+		l.Info("Decision: " + scheduling.Decision)
+	}
+
+	// check if provider specific resource already exists, if not create a new one
+
+	// create the cloud-specific VirtualMachine resource
+
+	//at the end set status field provisioned to true
 	vm.Status.Provisioned = true
 	err = r.Status().Update(ctx, vm)
 	if err != nil {
