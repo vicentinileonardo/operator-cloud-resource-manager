@@ -5,6 +5,7 @@ metadata:
     app.kubernetes.io/name: operator-cloud-resource-manager
     app.kubernetes.io/managed-by: kustomize
   name: virtualmachine-sample
+  namespace: default
 spec:
   image: "ubuntu"
   memory: "4Gi"

@@ -28,13 +28,15 @@ type VirtualMachineSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Image           string   `json:"image,omitempty"`
-	Cpu             int32    `json:"cpu,omitempty"`
-	Memory          string   `json:"memory,omitempty"`
-	Provider        string   `json:"provider,omitempty"`
-	EligibleRegions []string `json:"eligibleRegions,omitempty"`
+	Image    string `json:"image,omitempty"`
+	Cpu      int32  `json:"cpu,omitempty"`
+	Memory   string `json:"memory,omitempty"`
+	Provider string `json:"provider,omitempty"`
 
-	// +kubebuilder:default:={{"type":"region","decision":"region_not_scheduled"},{"type":"time","decision":"time_not_scheduled"}}
+	// +kubebuilder:default:="eligible_regions_not_set"
+	//EligibleRegions string `json:"eligibleRegions,omitempty"`
+
+	// +kubebuilder:default:={{"type":"region","decision":"region_not_scheduled"},{"type":"time","decision":"time_not_scheduled"}, {"type":"k8s_namespace","decision":"namespace_not_set"}, {"type":"k8s_name","decision":"name_not_set"}}
 	Scheduling []VirtualMachineSchedulingResponse `json:"scheduling,omitempty"`
 }
 

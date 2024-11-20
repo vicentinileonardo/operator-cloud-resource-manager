@@ -42,10 +42,6 @@ spec:
               cpu:
                 format: int32
                 type: integer
-              eligibleRegions:
-                items:
-                  type: string
-                type: array
               image:
                 type: string
               memory:
@@ -58,6 +54,8 @@ spec:
                   type: region
                 - decision: time_not_scheduled
                   type: time
+                - decision: not_set
+                  type: k8s_name
                 items:
                   properties:
                     decision:
