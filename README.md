@@ -1,6 +1,6 @@
 # operator-cloud-resource-manager
 
-This repo serves as a learning environment for kubebuilder
+This repo was created in the context of my master's thesis. Currently in standby since another solution was chosen.
 
 
 # Setup (example)
